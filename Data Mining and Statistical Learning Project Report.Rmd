@@ -1,0 +1,171 @@
+---
+title: "Data Mining and Statistical Learning Project Report"
+author: "Kofi Gyan"
+date: '2022-04-24'
+output: 
+  html_document:
+  theme: cerulean
+  toc: true
+  toc_float: true
+---
+
+```{r setup, inlcude=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+
+```
+
+### Introduction:
+The motivation for this project is to gain practical data science experience that is applicable in a real world setting.As a student,it can be easy to to memorize concepts but applying those concepts in a practical manner is what can set you apart as an industry professional hence the need for this project.
+  The data set to be analyzed is the Boston data set which is a record of census data from 506 suburbs in Boston, Massachusetts collated in the 1970s.It was obtained from the MASS library.The objective of analysis in this project is to determine if other than affluence, there were any other factors that could have influenced the rate of crime in those 506 suburbs.I selected this data set because it has a high number of variables which is necessary to isolate the independent influence of other predictors for crime rate.
+
+Given that this is an inference problem, it will not be necessary to calculate error rate.Rather the focus is on determining which predictor variable or predictor variables have a relationship with the response variable and how strong or weak that relationship is.
+
+
+### Methodology:
+The response variable in question,crim,from the Boston data set,is a continuous           variable.
+ 
+It is a metric measuring the per capita crime by town ranging from 0 to 100.Given that we   are trying to predict values for a continuous variable, regression is the natural choice   for this problem.
+
+Below, I have detailed results for **Pearson's coefficient**,**lasso regression**,**multiple linear regression** and **random  forests**. Pearson's correlation was not taught in this class but I believe it would be a useful tool in the analysis to be carried out.
+
+* Data processing:
+  * The Boston data set has already been standardized which means that there is no need for    data imputation or removal of any particular columns or rows.
+  * There was one categorical variable that I converted to a factor using the as.factor()          function : *Boston$chas*.
+  * The full complement of the data set was needed so no variables were removed.
+
+* Justification for methods used :
+  * I used multiple linear regression because at different error rates and confidence              intervals you are provided with coefficient estimates for your predictors which                indicate how strongly the predictor variable in question relates to the response               variable.We will take a look at multiple linear regression model results later in this         report.For an inference problem, this is important.Unlike lasso regression, it doesn't         apply shrinkage in the process of generating model coefficients.
+  * Random forests take the average of predictions made by multiple ensemble trees that            have been trained on different portions of the data.This technique allows one to reduce        variance.Random forests' interpretability is facilitated by passing the random forest          model into the importance function which gives you a snapshot of important model               predictors ranked by Gini coefficient and increasing MSE. It is different from regression      models in this sense.
+  * The lasso regression applies a penalty to coefficient estimates for predictors in the          model in order to ***reduce the number of variables*** and improve model accuracy.Given        that we will be performing inference, this is important to note.Like multiple linear           regression,lasso will also generate coefficient estimates for predictor variables which can     be used to gauge the relationship strength between variables.
+  * Pearson's coefficient :Even though Pearson's correlation coefficient doesn't completely        characterize the relationship between variables, I used it because the hypothesis test for      this technique is similar to the hypothesis test applied to coefficient estimates              obtained from regression techniques.With a range between -1 and 1, it indicates the            strength and direction of the relationship between two variables.
+     * Ho: ρ = 0 (no linear relationship)
+     * Ha : ρ ≠ 0 (linear relationship)
+  
+  
+### Results and Discussion :
+
+
+```{r crim.fit, echo=TRUE}
+#seek clarification on interpretation of different values of alpha for statistically significant levels
+#bias variance trade off
+library("MASS")
+library("ISLR")
+set.seed(10)
+
+Boston$chas <- as.factor(Boston$chas)
+data <- Boston
+crime.fit <- lm(crim~.,data = data)
+summary(crime.fit)
+
+##It appears the only variable of note here is nox variable which is a measure of nitrous oxide concentration.This could be an indicator of crime being prevalent in neighborhoods close to industrial complexes.## 
+```
+```{r crime.fit1, echo=TRUE}
+set.seed(10)
+crime.fit1 <- lm(crim ~ lstat:nox + black + nox + medv, data = data)
+summary(crime.fit1)
+
+##After noticing the relationship between nitrous oxide concentration and crime, I decided to add an interaction term to see if poorer people were living in these neighborhoods close to industrial sections of towns##
+
+#After nox,the interaction term between nox and lstat, has the second highest coefficient estimate. lstat is a variable depicting the lower status of the population.This indicates that some poor people may live close to the industrial sections of town.The coefficient estimate is quite small which indicates that the relationship with the repsonse variable is weak.Thus poor people living close to industrial complexes alone may not be enough to affect the crime rate. 
+```
+```{r crime.fit2, echo=TRUE}
+set.seed(10)
+crime.fit2 <- lm(crim ~ rad +nox+ tax+ dis+rm+indus,lstat,medv, data = data)
+summary(crime.fit2)
+
+#I selected a smaller number of variables I thought would affect crime rate given that I had selected all variables in my first model.
+#Once again nitrous oxide concentration has the highest coefficient estimate.Rad which is
+#a measure of how close the nearest highway is has a relatively small coefficient #estimate.Clearly, the chance to make a quick getaway is not an incentive for crime either.
+```
+
+```{r correlationmatrix, echo=TRUE}
+set.seed(10)
+cordata = subset(Boston,select = c(zn,nox,dis,rad,black,lstat,medv,crim))
+library(ggcorrplot)
+corr <- round(cor(cordata), 1) #correlation matrix
+corr
+
+#Correlation matrix detailing how strongly each predictor relates to response variable and other variables using #pearson's coefficient.
+```
+```{r correlationplot, echo=TRUE}
+ggcorrplot(corr, hc.order = TRUE, type = "lower", lab = TRUE, lab_size = 3, method="circle", colors = c("blue", "white", "red"), outline.color = "gray", show.legend = TRUE, show.diag = FALSE, title="Correlogram of significant census variables")
+
+#Comments on correlation matrix
+#High  positive correlation between 25000sq ft land and 5 boston epmloyment centers.
+#Negative correlation between nitrous oxide concentration and distance to employment centers
+#High positive correlation between access to highways nitrous oxide concentration
+#Black doesn't seem to have high correlation with anything really.
+#High negative correlation between lower status of pop and median value of homes
+#High negative correlation between lstat and  nitrous oxide concentration
+
+```
+```{r randomforest, echo=TRUE}
+library(randomForest)
+set.seed(10)
+rft <- sample(1:506,)
+rf1 <- randomForest(crim ~ ., data = Boston, importance = TRUE, 
+
+                                        subset = rft)
+
+
+importance(rf1)
+
+
+varImpPlot(rf1)
+
+#Plots of Increasing MSE and Importance vs Predictor variables.
+#The Higher the value of mean decrease accuracy or mean decrease gini score ,the higher the importance of the variable in the model. 
+
+#In the Gini index plot shown above, medv is most important variable from the plot on the right. The median value of owner occupied homes is the most important predictor.This is in contrast to the fixation on nitrous oxide by the regression models above.
+
+#In the MSE plot to the left, the most important predictor is rad.The measure of accessibility to radial highways.This is in contrast to the Gini plot and results from the regression models
+#above.
+```
+
+
+
+```{r lasso, echo=TRUE}
+
+library(glmnet)
+set.seed(1)
+feature <- model.matrix(crim ~ ., data)[,-1]
+response <- data$crim
+grid <- 10^seq(10, -2, length = 100)
+cv.lasso <- cv.glmnet(feature, response, alpha = 1 , lambda = grid)
+bestlam <- cv.lasso$lambda.min
+best.lasso.fit <- glmnet(feature, response, alpha = 1, lambda = bestlam)
+lasso.coef <- predict(best.lasso.fit,type = "coefficients",s = bestlam)
+lasso.coef
+```
+
+
+
+
+
+
+### Conclusion
+* Remarks:
+  * The multiple linear regression model and lasso regression both generated high negative         coefficient estimates for nitrous oxide concentration. This occurred in the case of            multiple linear regression when I included all predictor variables in the model. The same      is true for lasso regression.
+  * The multiple linear regression model generated a positive coefficient estimate for nitrous     oxide after running the model on a smaller data set of variables that had higher               coefficient estimates from previous runs.
+  * Random forests settled on rad and medv as the most important variables.
+  * Lasso regression model removed age predictor and tax but multiple linear regression and        random forests maintained age predictor.
+* The results from the random forests model seem to make more sense than the results from the     regression  models.If one were to live in a high income neighborhood, the likelihood of        crime taking place could be higher.Conversely, the likelihood of crime in low income           neighborhoods could also be high.
+    
+* It is interesting to note that the regression methods and Pearson's coefficient all provided   similar results and the ensemble method provided contrasting results to the regression         methods employed in this analysis.
+
+* We already know that affluence can affect crime rate.The question I was trying to answer was   whether or not there other factors to consider.Per the random forest model, it seems making a   quick escape is another factor to consider when it comes to crime rate.
+
+* Limitations : 
+  * Given that model coefficients do not completely characterize the relationship between          variables it is possible that the results from the regression models may not be telling the     whole story when it comes to predictor variables relating to the response variable.
+
+  * I believe that there may be interaction terms that I could have put together that may have     produced more meaningful results but due to time constraints and the large number of           variables I was unable to explore all of these terms.
+  * This data set was created for the purpose of determining how much people were willing         to pay for clean air around their homes.As such, it is not intrinsically set up for            exploring crime rate relationships between variables. 
+* What I would do differently:
+  * I would use a different data set or augment the current data set with more information on      crime.
+  * I would try to use more interaction terms.
+  * I would focus more on ensemble tree methods like bagging and boosting.
+* Future Research:
+ * Access police records so as to create a metric specifying how many crimes had been committed    per town.Given that it is not clear how crime rate was calculated,additional information may    help improve model coefficient estimates.
+ * Create a metric to specify the circumstances of the crime.
+ * Gather data and create metric for police response to crime in the area.
+ * Gather data and create metric for public response to crime in the area.

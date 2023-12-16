@@ -1,0 +1,345 @@
+---
+author: "Kofi Gyan"
+title: "Computer Applications in Statistics Project"
+date:  '2023-12-10'
+output: 
+  html_document:
+  theme: cerulean
+  toc: true
+  toc_float: true
+---
+
+
+```{r setup, inlcude=FALSE}
+knitr::opts_chunk$set(echo=TRUE)
+
+```
+
+
+
+### Introduction:
+How much do fruit and vegetables cost? The USDA Economic Research Service reports average prices to inform policymakers and nutritionists about how much money it costs U.S. households to eat a sufficient quantity and variety of fruits and vegetables.
+In this section,I will be examining fruits.This data set tracks prices for fruits at various supermarkets across the US in their various forms: fresh, frozen, canned, juice etc. This further allows policy makers to have a more granular view of how exactly US households are spending money on fruits.This data set has 63 observations and 6 variables. A number of hypothesis tests can be performed in this context. The response variable in this case is retail price of  fruit. The predictors are fruit name, form, plant yield, cup equivalent and cup equivalent price. Some of the questions I will be looking to answer with this data are :  
+
+i.	Does the form of fruit or vegetable have an effect on retail price?
+ii.	Does plant yield affect retail price?  
+iii. What combination of the predictors is most strongly correlated to retail price?
+iv.	Are any predictor interactions worth exploring(significant)? 
+
+
+Source of Data: https://www.ers.usda.gov/data-products/fruit-and-vegetable-prices.aspx
+
+
+
+```{r }
+fruit_data <- read.csv(file = "Fruit_Prices_2020.csv")
+fruit_data$Form <- as.factor(fruit_data$Form)
+fit_1 <- lm(RetailPrice ~ Form,data = fruit_data)
+summary(fit_1)
+```
+### Hypothesis Test - Positive Relationship Between Fruit Form and Retail Price
+
+Conduct test to determine if there are **positive relationships** between the   different forms of fruit and retail price using alpha of **0.05**?
+
+1.Dried :  
+
+Ho : β2 = 0  
+Ha : β2 > 0   
+
+
+Conclusion: p-value < 0.01 so reject Ho  
+Interpretation : Sufficient evidence to conclude that there is a positive   relationship between amount of dried fruit and retail price.  
+
+Coefficient = 4.2762,While holding other variables constant,for every unit   
+change in amount of dried fruit, there is a 4.2762 increase in retail price.    
+
+2.Fresh  
+
+Ho : β2 = 0  
+Ha : β2 > 0   
+
+Conclusion: p-value < 0.01 so reject Ho  
+Interpretation : Sufficient evidence to conclude that there is a positive   relationship between amount of fresh fruit and retail price.
+
+Coefficient = 0.1500,While holding other variables constant for every unit   
+change in amount of fresh fruit, there is a 0.1500 increase in retail price.  
+
+3.Frozen
+
+Ho : β2 = 0  
+Ha : β2 > 0  
+
+Conclusion: p-value < 0.01 so reject Ho  
+Interpretation : Sufficient evidence to conclude that there is a positive   relationship between amount of frozen fruit and retail price.  
+
+Coefficient = 1.5644,While holding other variables constant for every unit   
+change in amount of frozen fruit,there is a 1.5644 increase in retail price.  
+
+4.Juice  
+
+Ho : β2 = 0  
+Ha : β2 > 0  
+
+Conclusion: p-value < 0.01 so reject Ho      
+Interpretation : Sufficient evidence to conclude that there is a positive   relationship between amount of juice fruit and retail price.  
+
+Coefficient = -0.8234,While holding other variables constant for every unit     
+change in amount of fresh of juice,there is a 0.8234 decrease in retail price.      
+
+###  Conclusion - Fruit Form Hypothesis Test  
+For this test, the qualitative variable being tested had 4 different categories:    dried,juice,fresh and frozen. I performed tests for all 4 categories   
+at a 0.05 error rate.In all instances,the null hypothesis was rejected,  
+leading me to conclude that for all levels of the form of fruit(*categorical   variable*), there was a positive relationship between   
+the predictor variable(*form of fruit*) and *retail price*.  
+
+
+
+```{r 2}
+yield_fit <- lm(RetailPrice ~ Yield,data = fruit_data)
+summary(yield_fit)
+```
+
+### Hypothesis Test - Positive Relationship Between Retail Price and Plant Yield  
+Ho : β2 = 0      
+Ha : β2 > 0    
+Alpha = 0.05  
+
+p-value = 0.003704/2  
+Conclusion: p-value < 0.01 so reject Ho.  
+Interpretation : There is sufficient evidence to conclude that there is a positive   relationship retail price and plant yield.    
+
+
+Coefficient = 4.294,While holding other variables constant,for every unit change 
+in plant yield, there is a 4.294 in increase in retail price.  
+
+### Conclusion - Hypothesis Test : Yield and Retail Price
+Yield is essentially the amount of plant produce harvested per unit area.  
+This hypothesis has led us to the conclusion that plant yield affects 
+the price of fruit directly.This makes sense because increase in the 
+amount of fruit on the market can lead to a glut thereby decreasing price 
+and scarcity of fruit can lead to an increase in price.  
+
+
+```{r 3}
+fit_2<- lm(RetailPrice ~ Yield + Form + CupEquivalentPrice+CupEquivalentSize,data = fruit_data)
+summary(fit_2)
+
+fit_3 <- lm(RetailPrice ~ Yield + CupEquivalentPrice, data = fruit_data)
+summary(fit_3)
+
+fit4 <- lm(RetailPrice ~ CupEquivalentPrice + Form,data =fruit_data)
+summary(fit4)
+```
+### Conclusion - Predictor Combinations
+From the combination of predictors used in the 3 models, the first model  
+had the highest adjusted R-squared value of 91.02.This indicates that 91.02% 
+of the variation in retail price can be explained by the model as against 
+45.39% in the second model and 86.6% in the last model.The best combination of  
+predictors for predicting retail price are *Plant Yield*,*Fruit Form*,*CupEquivalentSize* and *Cup Equivalent Price*.
+
+```{r 4}
+
+fit_5<- lm(RetailPrice ~ Yield + Form + CupEquivalentPrice:Yield,data = fruit_data)
+summary(fit_5)
+
+fit_6 <- fit_2<- lm(RetailPrice ~ Yield:Form + Form + CupEquivalentPrice,data = fruit_data)
+summary(fit_6)
+
+```
+###
+The linear model from fit_5 has the higher adjusted R-squared   
+value(*92.44%*) so I will be performing the hypothesis test using coefficients  
+from this model.
+
+The hypothesis test will determine if the interaction term from this model is significant.
+
+Ho : β2 = 0      
+Ha : β2 > 0    
+Alpha = 0.05
+p-value < 0.01 so reject Ho.
+
+There is sufficient evidence to conclude that interaction term is  
+statistically significant.
+
+### Conclusion - Hpyothesis Test on Interaction
+For many fruits and vegetables, a 1-cup equivalent equals the weight of enough  
+edible food to fill a measuring cup.Interaction effects in linear models are   important because it allows the researcher to explore relationships between   predictor variables.That is,how does an increase or decrease in plant yield  
+affect cup equivalent price and how does that ultimately affect retail price.  
+
+
+### Vegetables
+In this section, I will perform similar hypothesis tests on vegetable data 
+from 2020.This data set tracks prices for vegetables at various supermarkets across the US in their various forms: fresh, frozen and dried. This further allows policy makers to have a more granular view of how exactly US households are spending money on vegetables.This data set has 93 observations and 6 variables. A number of hypothesis tests can be performed in this context. The response variable in this case is retail price of vegetable. The predictors are vegetable name, form, plant yield, cup equivalent size  and cup equivalent price. Some of the questions I will be looking to answer with this data are :
+
+i.	Does the form of vegetable have an effect on retail price?
+ii.	Does plant yield affect retail price?  
+iii.What combination of the predictors is most strongly correlated to retail price?
+iv.	Are any predictor interactions worth exploring(significant)?
+
+```{r 5}
+veg_data <- read.csv(file = "Vegetable_Prices_2020.csv")
+veg_data$Form <- as.factor(veg_data$Form)
+fit_7 <- lm(RetailPrice ~ Form,data = veg_data)
+summary(fit_7)
+
+```
+
+### Hypothesis Test - Positive Relationship Between Vegetable Form and Retail Price  
+
+
+Conduct test to determine if there are **positive relationships** between the   different forms of vegetable and retail price using alpha of **0.05**?
+
+
+1.Dried :  
+
+Ho : β2 = 0  
+Ha : β2 > 0   
+
+
+Conclusion: p-value > 0.05 so fail to reject Ho  
+Interpretation : Insufficient evidence to conclude that there is a positive relationship between amount of dried vegetables and retail price.  
+
+Coefficient = 0.1141,While holding other variables constant,for every unit change   
+in amount of dried vegetable, there is a 0.1141 increase in retail price. 
+
+
+2.Fresh  
+
+Ho : β2 = 0  
+Ha : β2 > 0   
+
+Conclusion: p-value > 0.05, so fail to reject Ho  
+Interpretation : Insufficient evidence to conclude that there is a positive   relationship between amount of fresh vegetable and retail price.
+
+Coefficient = 0.4806,While holding other variables constant for every unit change  
+in amount of fresh fruit, there is a 0.4806 increase in retail price.
+
+
+3.Frozen
+
+Ho : β2 = 0  
+Ha : β2 > 0  
+
+Conclusion: p-value < 0.05 so fail to reject Ho
+Interpretation : Insufficient evidence to conclude that there is a positive relationship between amount of frozen fruit and retail price.
+
+Coefficient = 0.6311,While holding other variables constant for every unit change in amount of frozen vegetable, there is a 0.6311 increase in retail price.
+
+
+
+###  Conclusion - Vegetable Form Hypothesis Test  
+For this test, the qualitative variable being tested had 3 different categories:    dried,fresh and frozen. I performed tests for all 3 categories   
+at a 0.05 error rate.In all instances,the null hypothesis was not rejected,  
+leading me to conclude that for all levels of the form of vegetable(*categorical   variable*), there wasn't enough evidence to determine if a positive relationship between *form of vegetable* and *retail price* existed.  
+
+
+
+```{r 6}
+veg_fit <- lm(RetailPrice ~ Yield,data = veg_data)
+summary(veg_fit)
+
+```
+
+
+### Hypothesis Test - Positive Relationship Between Retail Price and Plant Yield  
+Ho : β2 = 0      
+Ha : β2 > 0    
+Alpha = 0.05  
+
+p-value = 0.7039/2  
+Conclusion: p-value > 0.05 so fail to reject Ho.  
+Interpretation : There is insufficient evidence to conclude that there is a   positive relationship retail price and plant yield.    
+
+
+Coefficient = 0.08146,for every unit change in plant yield, there is a 0.08146  
+in increase in retail price.  
+
+### Conclusion - Hypothesis Test : Yield and Retail Price Relationship
+Yield is essentially, the amount of plant produce harvested per unit area.  
+This hypothesis has led us to the conclusion that plant yield doesn't affect 
+the price of vegetable directly.This means that plant yield alone is not  
+a good enough predictor of retail price of vegetable.
+
+
+
+```{r 7}
+vfit_2<- lm(RetailPrice ~ Yield + Form + CupEquivalentPrice + CupEquivalentSize,data = fruit_data)
+summary(vfit_2)
+
+vfit_3 <- lm(RetailPrice ~ Yield + CupEquivalentPrice + CupEquivalentSize, data = fruit_data)
+summary(vfit_3)
+
+vfit4 <- lm(RetailPrice ~ CupEquivalentPrice + Form,data =fruit_data)
+summary(vfit4)
+```
+
+
+### Conclusion - Predictor Combinations
+From the combination of predictors used in the 3 models, the first model  
+had the highest adjusted R-squared value of 91.02.This indicates that 91.02% 
+of the variation in retail price can be explained by the model as against 
+55.33% in the second model and 87.69% in the last model.The best combination of  
+predictors for predicting retail price are *Plant Yield*,*Fruit Form*,*CupEquivalentSize* and *Cup Equivalent Price*.
+
+
+
+```{r 8}
+
+vfit_5<- lm(RetailPrice ~ Yield + Form + CupEquivalentPrice:Yield,data = fruit_data)
+summary(vfit_5)
+
+vfit_6 <- lm(RetailPrice ~ Yield:CupEquivalentSize + Form + CupEquivalentPrice,data = fruit_data)
+summary(vfit_6)
+
+```
+
+###
+The linear model from vfit_5 has the higher adjusted R-squared   
+value(*92.44%*) so I will be performing the hypothesis test using coefficients  
+from this model.
+
+The hypothesis test will determine if the interaction term from this model is significant.
+
+Ho : β2 = 0      
+Ha : β2 > 0    
+Alpha = 0.05
+p-value < 0.01 so reject Ho.
+
+There is sufficient evidence to conclude that interaction term is  
+statistically significant.
+
+### Conclusion - Hpyothesis Test on Interaction
+
+For many fruits and vegetables, a 1-cup equivalent equals the weight of enough    
+edible food to fill a measuring cup.Interaction effects in linear models are     important because it allows the researcher to explore relationships between   predictor variables.That is,how does an increase or decrease in plant yield  
+affect cup equivalent price and how does that ultimately affect retail price.
+
+### Discussion
+
+Takeaways : 
+
+I believe it was quite telling that even though we had the same variables in both   fruit and vegetable data sets, the conclusions were not the same.  
+For fruits, I generally rejected the null hypothesis and found evidence of a positive relationship between yield and retail price,determined that form affected price and
+discovered significant interactions that shed more light on predictor variable relationships and how they affected retail price. 
+In the case of vegetables, I failed to reject the null hypothesis and failed to find
+evidence to conclude that a positive relationship existed between yield and retail price and failed to determine if form affected price.I did find significant interactions between predictor variables though.
+
+Secondly, I came to identify important predictors related to retail price 
+of vegetables and fruit. I also identified relationships between different     predictor variables and how they ultimately affect retail    
+price.This important for identifying implicit relationships between  
+independent and response variables.This information could be passed onto    
+government agencies and farmers to create tailor made solutions to boost    
+fruit and vegetable consumerism.  
+
+Limitations: 
+
+I believe if I had more variables to consider, I could have made a more complete   analysis.
+
+Do Differently: 
+
+I would explore more predictor variable interactions.
+
+Future Research:  
+
+I believe there are more variables that could possibly affect retail price.         
+The variables being considered only tell part of the story. For example,climate   affects crops that are grown in a country.Imported crops generally cost more than   homegrown crops and yet data for this variable was not made available in the USDA data sets.More research needs to be done in order to identify more variables that could directly or indirectly affect retail price fluctuations.    
