@@ -1,9 +1,0 @@
-BloodDrop Project
-shuffle orginal 
-Randomly choose 20% for test
-Keep remainder as training
-Rotate separately images and MAKE SURE to keep them apart.
-
-Change code.
-Test and dev should read from same address.
-Training should read from different  
